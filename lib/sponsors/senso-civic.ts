@@ -1,7 +1,7 @@
 import type { CivicBrief } from "@/lib/local-lens-data";
 
 type SensoPublishResult = {
-  provider: "Senso / cited.md";
+  provider: "Senso";
   mode: "real-api" | "seeded-demo" | "api-error-fallback";
   purpose: string;
   publishedUrl?: string;
@@ -13,67 +13,63 @@ type SensoPublishResult = {
 export async function publishCivicBrief(params: {
   brief: CivicBrief;
 }): Promise<SensoPublishResult> {
-  const apiUrl = process.env.SENSO_PUBLISH_URL || process.env.CITED_API_URL;
-  const apiKey = process.env.SENSO_API_KEY || process.env.CITED_API_KEY;
+  const apiKey = process.env.SENSO_API_KEY;
+  const searchUrl =
+    process.env.SENSO_SEARCH_URL || "https://apiv2.senso.ai/api/v1/org/search";
 
-  if (!apiUrl || !apiKey) {
+  if (!apiKey) {
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "seeded-demo",
       purpose:
-        "Grounded public civic brief publishing. Add SENSO_PUBLISH_URL/SENSO_API_KEY or CITED_API_URL/CITED_API_KEY to enable real publishing.",
+        "Senso API key missing. Add SENSO_API_KEY to use Senso as the grounded civic context layer.",
       publishedUrl: `/briefs/${params.brief.id}`,
       citationId: `seeded_${params.brief.id}`,
     };
   }
 
   try {
-    const response = await fetch(apiUrl, {
+    const query = [
+      "Verify and ground this LocalLens civic micro-brief using organization knowledge/context.",
+      `Headline: ${params.brief.headline}`,
+      `Area: ${params.brief.area}`,
+      `Summary: ${params.brief.summary}`,
+      `Why it matters: ${params.brief.whyItMatters}`,
+      `Who is affected: ${params.brief.whoIsAffected.join(", ")}`,
+      `Sources: ${params.brief.sources.map((s) => `${s.title} - ${s.url}`).join("; ")}`,
+      `Agent trace: ${params.brief.agentTrace.join("; ")}`,
+    ].join("\n");
+
+    const response = await fetch(searchUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "X-API-Key": apiKey,
       },
-      body: JSON.stringify({
-        title: params.brief.headline,
-        area: params.brief.area,
-        category: params.brief.category,
-        status: params.brief.status,
-        confidence: params.brief.confidence,
-        summary: params.brief.summary,
-        why_it_matters: params.brief.whyItMatters,
-        who_is_affected: params.brief.whoIsAffected,
-        sources: params.brief.sources,
-        agent_trace: params.brief.agentTrace,
-        output_type: "grounded_civic_microbrief",
-      }),
+      body: JSON.stringify({ query }),
     });
 
     if (!response.ok) {
-      throw new Error(`Senso/cited publish returned ${response.status}: ${await response.text()}`);
+      throw new Error(`Senso search returned ${response.status}: ${await response.text()}`);
     }
 
-    const raw = await response.json() as {
-      url?: string;
-      published_url?: string;
-      id?: string;
-      citation_id?: string;
-    };
+    const raw = await response.json();
 
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "real-api",
-      purpose: "Published a grounded civic micro-brief with sources and agent trace.",
-      publishedUrl: raw.published_url || raw.url,
-      citationId: raw.citation_id || raw.id,
+      purpose:
+        "Real Senso API call completed. Senso searched the LocalLens org context to ground the civic brief.",
+      publishedUrl: `/briefs/${params.brief.id}`,
+      citationId: `senso_${params.brief.id}`,
       raw,
     };
   } catch (error) {
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "api-error-fallback",
       purpose:
-        "Publishing failed, so LocalLens kept the brief as a local seeded public artifact for demo continuity.",
+        "Senso API call failed, so LocalLens kept the local cited brief artifact for demo continuity.",
       publishedUrl: `/briefs/${params.brief.id}`,
       citationId: `fallback_${params.brief.id}`,
       error: String(error),

@@ -8,16 +8,9 @@ export async function GET() {
       required: ["NIMBLE_API_KEY"],
     },
     senso: {
-      configured: Boolean(
-        (process.env.SENSO_PUBLISH_URL && process.env.SENSO_API_KEY) ||
-          (process.env.CITED_API_URL && process.env.CITED_API_KEY)
-      ),
-      mode:
-        (process.env.SENSO_PUBLISH_URL && process.env.SENSO_API_KEY) ||
-        (process.env.CITED_API_URL && process.env.CITED_API_KEY)
-          ? "real-api-ready"
-          : "fallback",
-      required: ["SENSO_PUBLISH_URL + SENSO_API_KEY", "or CITED_API_URL + CITED_API_KEY"],
+      configured: Boolean(process.env.SENSO_API_KEY),
+      mode: process.env.SENSO_API_KEY ? "real-api-ready" : "fallback",
+      required: ["SENSO_API_KEY", "optional SENSO_SEARCH_URL"],
     },
     clickhouse: {
       configured: Boolean(
