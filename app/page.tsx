@@ -351,7 +351,15 @@ export default function Home() {
                   )}
                   {result.publishing.publishedUrl && (
                     <p className="mt-2 text-sm text-black/60">
-                      <strong>Published URL:</strong> {result.publishing.publishedUrl}
+                      <strong>Published URL:</strong>{" "}
+                      <a
+                        href={result.publishing.publishedUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline decoration-black/30 underline-offset-4"
+                      >
+                        {result.publishing.publishedUrl}
+                      </a>
                     </p>
                   )}
                 </div>

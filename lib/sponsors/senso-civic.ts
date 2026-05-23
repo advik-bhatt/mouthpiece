@@ -10,9 +10,16 @@ type SensoPublishResult = {
   error?: string;
 };
 
+function getAppBaseUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export async function publishCivicBrief(params: {
   brief: CivicBrief;
 }): Promise<SensoPublishResult> {
+  const briefUrl = `${getAppBaseUrl()}/briefs/${params.brief.id}`;
   const apiKey = process.env.SENSO_API_KEY;
   const searchUrl =
     process.env.SENSO_SEARCH_URL || "https://apiv2.senso.ai/api/v1/org/search";
@@ -23,7 +30,7 @@ export async function publishCivicBrief(params: {
       mode: "seeded-demo",
       purpose:
         "Senso API key missing. Add SENSO_API_KEY to use Senso as the grounded civic context layer.",
-      publishedUrl: `/briefs/${params.brief.id}`,
+      publishedUrl: briefUrl,
       citationId: `seeded_${params.brief.id}`,
     };
   }
@@ -60,7 +67,7 @@ export async function publishCivicBrief(params: {
       mode: "real-api",
       purpose:
         "Real Senso API call completed. Senso searched the LocalLens org context to ground the civic brief.",
-      publishedUrl: `/briefs/${params.brief.id}`,
+      publishedUrl: briefUrl,
       citationId: `senso_${params.brief.id}`,
       raw,
     };
@@ -70,7 +77,7 @@ export async function publishCivicBrief(params: {
       mode: "api-error-fallback",
       purpose:
         "Senso API call failed, so LocalLens kept the local cited brief artifact for demo continuity.",
-      publishedUrl: `/briefs/${params.brief.id}`,
+      publishedUrl: briefUrl,
       citationId: `fallback_${params.brief.id}`,
       error: String(error),
     };
