@@ -2,6 +2,7 @@ import { localSources, publishedBrief, seededChanges } from "./local-lens-data";
 import { logRecallFormRun } from "./clickhouse";
 import { nimbleRunCivicScan } from "./sponsors/nimble-civic";
 import { publishCivicBrief } from "./sponsors/senso-civic";
+import { googleEditorialDecision } from "./sponsors/google-editor";
 
 export async function runLocalLensScan() {
   const sessionId = `scan_${Date.now()}`;
@@ -84,6 +85,11 @@ export async function runLocalLensScan() {
     metrics,
   });
 
+  const googleEditorial = await googleEditorialDecision({
+    area,
+    change: published[0],
+  });
+
   const sensoPublish = await publishCivicBrief({
     brief: publishedBrief,
   });
@@ -101,6 +107,7 @@ export async function runLocalLensScan() {
     metrics,
     clickhouse,
     publishing: sensoPublish,
+    googleEditorial,
     sponsorStack: {
       nimble: {
         provider: "Nimble",
@@ -115,8 +122,8 @@ export async function runLocalLensScan() {
         role: `${sensoPublish.mode}: ${sensoPublish.purpose}`,
       },
       googleAgentCli: {
-        provider: "Google Agents CLI / ADK",
-        role: "Agent lifecycle, evals, and deployment framing.",
+        provider: "Google Gemini",
+        role: `${googleEditorial.mode}: ${googleEditorial.purpose}`,
       },
     },
   };

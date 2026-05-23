@@ -19,25 +19,14 @@ function textFromResult(raw: unknown) {
   }
 }
 
-function buildChangesFromSearch(raw: unknown): LocalChange[] {
+function buildChangesFromSearch(raw: unknown, fallbackChanges: LocalChange[]): LocalChange[] {
   const rawText = textFromResult(raw);
+  const nimbleEvidence = `Nimble live civic web search returned ${rawText.length} characters of source-discovery evidence.`;
 
-  return [
-    {
-      id: "nimble_live_civic_scan",
-      sourceId: "nimble_search",
-      title: "Live civic scan completed for New Brunswick",
-      category: "city-agenda",
-      status: "new",
-      importance: "resident-relevant",
-      whatChanged:
-        "Nimble returned live search results for official/public civic sources and recent resident-relevant updates around New Brunswick.",
-      whyItMatters:
-        "Residents usually have to check city pages, transit alerts, parking pages, Rutgers pages, and public notices manually. LocalLens turns that scan into a structured civic briefing.",
-      whoIsAffected: ["residents", "Rutgers students", "commuters", "bus riders", "local businesses"],
-      evidence: [rawText],
-    },
-  ];
+  return fallbackChanges.map((change) => ({
+    ...change,
+    evidence: [nimbleEvidence, ...change.evidence],
+  }));
 }
 
 function buildSourcesFromSearch(raw: unknown, fallbackSources: LocalSource[]): LocalSource[] {
@@ -90,7 +79,7 @@ export async function nimbleRunCivicScan(params: {
       purpose:
         "Real Nimble Search API call for live civic source discovery and resident-relevant update extraction.",
       sources: buildSourcesFromSearch(result, params.fallbackSources),
-      changes: buildChangesFromSearch(result),
+      changes: buildChangesFromSearch(result, params.fallbackChanges),
       raw: result,
     };
   } catch (error) {

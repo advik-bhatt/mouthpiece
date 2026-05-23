@@ -28,8 +28,12 @@ export async function GET() {
     },
     googleAgentCli: {
       configured: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_PROJECT),
-      mode: process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_PROJECT ? "ready" : "not-configured",
-      required: ["GEMINI_API_KEY", "GOOGLE_CLOUD_PROJECT"],
+      mode: process.env.GEMINI_API_KEY
+        ? "gemini-api-ready"
+        : process.env.GOOGLE_CLOUD_PROJECT
+          ? "google-cloud-ready"
+          : "not-configured",
+      required: ["GEMINI_API_KEY", "optional GOOGLE_CLOUD_PROJECT"],
     },
   });
 }
