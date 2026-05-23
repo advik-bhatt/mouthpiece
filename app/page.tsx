@@ -67,6 +67,14 @@ type ScanResult = {
     message?: string;
     reason?: string;
   };
+  publishing?: {
+    provider: string;
+    mode: string;
+    purpose: string;
+    publishedUrl?: string;
+    citationId?: string;
+    error?: string;
+  };
   sponsorStack: Record<string, { provider: string; role: string }>;
 };
 
@@ -326,6 +334,29 @@ export default function Home() {
                 </section>
               </div>
             </section>
+
+            {result.publishing && (
+              <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold">Senso publish status</h2>
+                <div className="mt-5 rounded-2xl border border-black/10 bg-[#fbfaf7] p-4">
+                  <div className="font-semibold">{result.publishing.provider}</div>
+                  <div className="mt-1 text-xs uppercase tracking-wide text-black/40">
+                    {result.publishing.mode}
+                  </div>
+                  <p className="mt-2 text-sm text-black/60">{result.publishing.purpose}</p>
+                  {result.publishing.citationId && (
+                    <p className="mt-2 text-sm text-black/60">
+                      <strong>Citation ID:</strong> {result.publishing.citationId}
+                    </p>
+                  )}
+                  {result.publishing.publishedUrl && (
+                    <p className="mt-2 text-sm text-black/60">
+                      <strong>Published URL:</strong> {result.publishing.publishedUrl}
+                    </p>
+                  )}
+                </div>
+              </section>
+            )}
 
             <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-semibold">Sponsor stack proof</h2>
