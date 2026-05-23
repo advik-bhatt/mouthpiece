@@ -364,7 +364,7 @@ export default function Home() {
               <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
                 <h2 className="text-2xl font-semibold">Reliability report</h2>
                 <p className="mt-2 text-sm text-black/60">
-                  Datadog/Lapdog-style audit of the agent trace before publishing.
+                  Datadog Lapdog trace audit of the agent chain before publishing.
                 </p>
 
                 <div className="mt-5 rounded-2xl border border-black/10 bg-[#fbfaf7] p-5">

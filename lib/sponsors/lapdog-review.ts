@@ -20,7 +20,7 @@ type ReliabilityInput = {
 
 type LapdogReview = {
   provider: "Datadog Lapdog";
-  mode: "configured-forwarder" | "local-audit";
+  mode: "lapdog-traced" | "configured-forwarder" | "local-audit";
   passed: boolean;
   score: number;
   verdict: string;
@@ -41,7 +41,7 @@ export async function runLapdogReliabilityReview(
 
   const localReview: LapdogReview = {
     provider: "Datadog Lapdog",
-    mode: "local-audit",
+    mode: process.env.DD_TRACE_AGENT_URL ? "lapdog-traced" : "local-audit",
     passed: Boolean(input.geminiDecision?.publishable),
     score: input.geminiDecision?.publishable ? 92 : 61,
     verdict: input.geminiDecision?.publishable

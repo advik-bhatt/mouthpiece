@@ -4,16 +4,22 @@ import { nimbleRunCivicScan } from "./sponsors/nimble-civic";
 import { publishCivicBrief } from "./sponsors/senso-civic";
 import { googleEditorialDecision } from "./sponsors/google-editor";
 import { runLapdogReliabilityReview } from "./sponsors/lapdog-review";
+import { traceStep } from "./datadog-trace";
 
 export async function runLocalLensScan() {
   const sessionId = `scan_${Date.now()}`;
   const area = "New Brunswick, NJ";
 
-  const nimble = await nimbleRunCivicScan({
-    area,
-    fallbackSources: localSources,
-    fallbackChanges: seededChanges,
-  });
+  const nimble = await traceStep(
+    "nimble.civic_scan",
+    { area, sponsor: "nimble" },
+    () =>
+      nimbleRunCivicScan({
+        area,
+        fallbackSources: localSources,
+        fallbackChanges: seededChanges,
+      })
+  );
 
   const changes = nimble.changes;
   const sources = nimble.sources;
@@ -80,29 +86,49 @@ export async function runLocalLensScan() {
     confidenceScore: 94,
   };
 
-  const clickhouse = await logRecallFormRun({
-    sessionId,
-    events,
-    metrics,
-  });
+  const clickhouse = await traceStep(
+    "clickhouse.ledger_write",
+    { area, session_id: sessionId, sponsor: "clickhouse" },
+    () =>
+      logRecallFormRun({
+        sessionId,
+        events,
+        metrics,
+      })
+  );
 
-  const googleEditorial = await googleEditorialDecision({
-    area,
-    change: published[0],
-  });
+  const googleEditorial = await traceStep(
+    "gemini.editorial_decision",
+    { area, sponsor: "google_gemini", candidate_count: published.length },
+    () =>
+      googleEditorialDecision({
+        area,
+        change: published[0],
+      })
+  );
 
-  const sensoPublish = await publishCivicBrief({
-    brief: publishedBrief,
-  });
+  const sensoPublish = await traceStep(
+    "senso.grounding",
+    { area, sponsor: "senso", brief_id: publishedBrief.id },
+    () =>
+      publishCivicBrief({
+        brief: publishedBrief,
+      })
+  );
 
-  const lapdogReview = await runLapdogReliabilityReview({
-    headline: publishedBrief.headline,
-    summary: publishedBrief.summary,
-    sources: publishedBrief.sources,
-    agentTrace: publishedBrief.agentTrace,
-    geminiDecision: googleEditorial.decision,
-    events,
-  });
+  const lapdogReview = await traceStep(
+    "lapdog.reliability_review",
+    { area, sponsor: "datadog_lapdog", brief_id: publishedBrief.id },
+    () =>
+      runLapdogReliabilityReview({
+        headline: publishedBrief.headline,
+        summary: publishedBrief.summary,
+        sources: publishedBrief.sources,
+        agentTrace: publishedBrief.agentTrace,
+        geminiDecision: googleEditorial.decision,
+        events,
+      })
+  );
 
   return {
     sessionId,
