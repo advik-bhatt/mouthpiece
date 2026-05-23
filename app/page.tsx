@@ -75,6 +75,31 @@ type ScanResult = {
     citationId?: string;
     error?: string;
   };
+  googleEditorial?: {
+    provider: string;
+    mode: string;
+    purpose: string;
+    decision: {
+      publishable: boolean;
+      classification: string;
+      reason: string;
+    };
+    error?: string;
+  };
+  lapdogReview?: {
+    provider: string;
+    mode: string;
+    passed: boolean;
+    score: number;
+    verdict: string;
+    checks: {
+      name: string;
+      status: string;
+      comment: string;
+    }[];
+    traceSummary: string[];
+    error?: string;
+  };
   sponsorStack: Record<string, { provider: string; role: string }>;
 };
 
@@ -334,6 +359,93 @@ export default function Home() {
                 </section>
               </div>
             </section>
+
+            {result.lapdogReview && (
+              <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold">Reliability report</h2>
+                <p className="mt-2 text-sm text-black/60">
+                  Datadog/Lapdog-style audit of the agent trace before publishing.
+                </p>
+
+                <div className="mt-5 rounded-2xl border border-black/10 bg-[#fbfaf7] p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-black/10 bg-white px-3 py-1 text-sm font-semibold">
+                      {result.lapdogReview.provider}
+                    </span>
+                    <span className="rounded-full border border-black/10 bg-white px-3 py-1 text-sm">
+                      {result.lapdogReview.mode}
+                    </span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-sm text-emerald-800">
+                      Score {result.lapdogReview.score}
+                    </span>
+                    <span className="rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-sm text-blue-800">
+                      {result.lapdogReview.passed ? "Passed" : "Held"}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-sm text-black/70">
+                    <strong>Verdict:</strong> {result.lapdogReview.verdict}
+                  </p>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    {result.lapdogReview.checks.map((check) => (
+                      <div key={check.name} className="rounded-2xl border border-black/10 bg-white p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="font-semibold">{check.name}</div>
+                          <span className="rounded-full border border-black/10 bg-[#f4f1ea] px-2 py-1 text-xs uppercase">
+                            {check.status}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-black/60">{check.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-black/10 bg-white p-4">
+                    <h3 className="font-semibold">Trace comments</h3>
+                    <ol className="mt-3 space-y-2 text-sm text-black/60">
+                      {result.lapdogReview.traceSummary.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {result.googleEditorial && (
+              <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-semibold">Gemini editorial decision</h2>
+                <div className="mt-5 rounded-2xl border border-black/10 bg-[#fbfaf7] p-4">
+                  <div className="font-semibold">{result.googleEditorial.provider}</div>
+                  <div className="mt-1 text-xs uppercase tracking-wide text-black/40">
+                    {result.googleEditorial.mode}
+                  </div>
+                  <p className="mt-2 text-sm text-black/60">{result.googleEditorial.purpose}</p>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-black/10 bg-white p-4">
+                      <div className="text-xs uppercase tracking-wide text-black/40">Publishable</div>
+                      <div className="mt-1 text-lg font-semibold">
+                        {result.googleEditorial.decision.publishable ? "Yes" : "No"}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-black/10 bg-white p-4">
+                      <div className="text-xs uppercase tracking-wide text-black/40">Classification</div>
+                      <div className="mt-1 text-lg font-semibold">
+                        {result.googleEditorial.decision.classification}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-black/10 bg-white p-4">
+                      <div className="text-xs uppercase tracking-wide text-black/40">Model</div>
+                      <div className="mt-1 text-lg font-semibold">Gemini</div>
+                    </div>
+                  </div>
+                  <p className="mt-4 rounded-2xl bg-white p-4 text-sm text-black/65">
+                    <strong>Reason:</strong> {result.googleEditorial.decision.reason}
+                  </p>
+                </div>
+              </section>
+            )}
 
             {result.publishing && (
               <section className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">

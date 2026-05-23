@@ -3,6 +3,7 @@ import { logRecallFormRun } from "./clickhouse";
 import { nimbleRunCivicScan } from "./sponsors/nimble-civic";
 import { publishCivicBrief } from "./sponsors/senso-civic";
 import { googleEditorialDecision } from "./sponsors/google-editor";
+import { runLapdogReliabilityReview } from "./sponsors/lapdog-review";
 
 export async function runLocalLensScan() {
   const sessionId = `scan_${Date.now()}`;
@@ -54,9 +55,9 @@ export async function runLocalLensScan() {
     },
     {
       step: 5,
-      title: "Editorial decision made",
-      detail: "Agent classified updates as resident-relevant, routine, duplicate, or unsupported.",
-      source: "Policy",
+      title: "Gemini editorial decision made",
+      detail: "Gemini evaluated whether the detected civic change should be published, rejected, or flagged.",
+      source: "Google Gemini",
       risk: "medium",
       status: "done",
     },
@@ -94,6 +95,15 @@ export async function runLocalLensScan() {
     brief: publishedBrief,
   });
 
+  const lapdogReview = await runLapdogReliabilityReview({
+    headline: publishedBrief.headline,
+    summary: publishedBrief.summary,
+    sources: publishedBrief.sources,
+    agentTrace: publishedBrief.agentTrace,
+    geminiDecision: googleEditorial.decision,
+    events,
+  });
+
   return {
     sessionId,
     area,
@@ -108,6 +118,7 @@ export async function runLocalLensScan() {
     clickhouse,
     publishing: sensoPublish,
     googleEditorial,
+    lapdogReview,
     sponsorStack: {
       nimble: {
         provider: "Nimble",
