@@ -49,20 +49,21 @@ What it logs:
 - metrics
 
 ### Senso / cited.md
-Goal: publish grounded civic micro-briefs.
+Goal: publish civic briefs to cited.md so AI agents (ChatGPT, Gemini, Perplexity) can discover and cite them.
 
 Env:
-- SENSO_PUBLISH_URL or CITED_API_URL
-- SENSO_API_KEY or CITED_API_KEY
+- SENSO_API_KEY — API key from senso.ai
+- SENSO_HANDLE — your org handle (published URL will be cited.md/<handle>/<slug>)
 
 Where used:
 - lib/sponsors/senso-civic.ts
 
-What it should do:
-- publish the final brief
-- preserve sources
-- preserve agent trace
-- return a public URL or citation ID
+What it does:
+- Converts the civic brief to a Markdown article (summary, why it matters, sources, agent trace)
+- Derives a URL-safe slug from the brief headline
+- POSTs to sdk.senso.ai/api/v1/generate with title, handle, slug, body, tags, and provenance
+- Returns the public cited.md URL and the slug as citation ID
+- Brief becomes AI-discoverable: LLMs can cite it when answering questions about the area
 
 ### Google Agents CLI / ADK
 Goal: package LocalLens as an agent lifecycle project.

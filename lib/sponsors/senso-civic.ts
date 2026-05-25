@@ -1,7 +1,9 @@
 import type { CivicBrief } from "@/lib/local-lens-data";
 
+const SENSO_BASE_URL = "https://sdk.senso.ai/api/v1";
+
 type SensoPublishResult = {
-  provider: "Senso";
+  provider: "Senso / cited.md";
   mode: "real-api" | "seeded-demo" | "api-error-fallback";
   purpose: string;
   publishedUrl?: string;
@@ -10,75 +12,117 @@ type SensoPublishResult = {
   error?: string;
 };
 
-function getAppBaseUrl() {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+}
+
+function toMarkdown(brief: CivicBrief): string {
+  const sourceList = brief.sources
+    .map((s) => `- **${s.title}** — ${s.role} ([${s.url}](${s.url}))`)
+    .join("\n");
+
+  const traceList = brief.agentTrace
+    .map((step, i) => `${i + 1}. ${step}`)
+    .join("\n");
+
+  const affected = brief.whoIsAffected.join(", ");
+
+  return [
+    `## Summary`,
+    ``,
+    brief.summary,
+    ``,
+    `## Why It Matters`,
+    ``,
+    brief.whyItMatters,
+    ``,
+    `## Who May Be Affected`,
+    ``,
+    affected,
+    ``,
+    `## Sources`,
+    ``,
+    sourceList,
+    ``,
+    `## Agent Trace`,
+    ``,
+    traceList,
+  ].join("\n");
 }
 
 export async function publishCivicBrief(params: {
   brief: CivicBrief;
 }): Promise<SensoPublishResult> {
-  const briefUrl = `${getAppBaseUrl()}/briefs/${params.brief.id}`;
   const apiKey = process.env.SENSO_API_KEY;
-  const searchUrl =
-    process.env.SENSO_SEARCH_URL || "https://apiv2.senso.ai/api/v1/org/search";
+  const handle = process.env.SENSO_HANDLE;
 
-  if (!apiKey) {
+  if (!apiKey || !handle) {
+    const missing = [!apiKey && "SENSO_API_KEY", !handle && "SENSO_HANDLE"]
+      .filter(Boolean)
+      .join(", ");
     return {
-      provider: "Senso",
+      provider: "Senso / cited.md",
       mode: "seeded-demo",
-      purpose:
-        "Senso API key missing. Add SENSO_API_KEY to use Senso as the grounded civic context layer.",
-      publishedUrl: briefUrl,
-      citationId: `seeded_${params.brief.id}`,
+      purpose: `cited.md publishing skipped. Add ${missing} to publish civic briefs as AI-citable articles.`,
     };
   }
 
-  try {
-    const query = [
-      "Verify and ground this LocalLens civic micro-brief using organization knowledge/context.",
-      `Headline: ${params.brief.headline}`,
-      `Area: ${params.brief.area}`,
-      `Summary: ${params.brief.summary}`,
-      `Why it matters: ${params.brief.whyItMatters}`,
-      `Who is affected: ${params.brief.whoIsAffected.join(", ")}`,
-      `Sources: ${params.brief.sources.map((s) => `${s.title} - ${s.url}`).join("; ")}`,
-      `Agent trace: ${params.brief.agentTrace.join("; ")}`,
-    ].join("\n");
+  const slug = toSlug(params.brief.headline);
+  const publishedUrl = `https://cited.md/${handle}/${slug}`;
 
-    const response = await fetch(searchUrl, {
+  try {
+    const response = await fetch(`${SENSO_BASE_URL}/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": apiKey,
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        title: params.brief.headline,
+        handle,
+        slug,
+        body: toMarkdown(params.brief),
+        tags: [
+          "civic",
+          params.brief.category.toLowerCase(),
+          params.brief.area.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+        ],
+        provenance: {
+          area: params.brief.area,
+          confidence: params.brief.confidence,
+          status: params.brief.status,
+          sources: params.brief.sources,
+          agentTrace: params.brief.agentTrace,
+        },
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Senso search returned ${response.status}: ${await response.text()}`);
+      throw new Error(`cited.md returned ${response.status}: ${await response.text()}`);
     }
 
     const raw = await response.json();
 
     return {
-      provider: "Senso",
+      provider: "Senso / cited.md",
       mode: "real-api",
       purpose:
-        "Real Senso API call completed. Senso searched the LocalLens org context to ground the civic brief.",
-      publishedUrl: briefUrl,
-      citationId: `senso_${params.brief.id}`,
+        "Civic brief published to cited.md. AI agents (ChatGPT, Gemini, Perplexity) can now discover and cite this brief when answering questions about the area.",
+      publishedUrl,
+      citationId: slug,
       raw,
     };
   } catch (error) {
     return {
-      provider: "Senso",
+      provider: "Senso / cited.md",
       mode: "api-error-fallback",
-      purpose:
-        "Senso API call failed, so LocalLens kept the local cited brief artifact for demo continuity.",
-      publishedUrl: briefUrl,
-      citationId: `fallback_${params.brief.id}`,
+      purpose: "cited.md publish failed. Brief was not published to the AI-discoverable web.",
+      citationId: slug,
       error: String(error),
     };
   }
