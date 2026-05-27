@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { LocalChange } from "@/lib/local-lens-data";
+import type { LocalChange } from "@/lib/public-wire-data";
 
 type GoogleEditorialResult = {
   provider: "Google Gemini";
@@ -59,7 +59,7 @@ export async function googleEditorialDecision(params: {
       decision: {
         publishable: Boolean(params.change && params.change.status !== "rejected"),
         classification: params.change?.importance || "resident-relevant",
-        reason: "Fallback decision based on seeded LocalLens policy.",
+        reason: "Fallback decision based on seeded PublicWire policy.",
       },
     };
   }
@@ -68,7 +68,7 @@ export async function googleEditorialDecision(params: {
     const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
-You are the editorial decision layer for LocalLens, an autonomous civic change monitor.
+You are the editorial decision layer for PublicWire, an autonomous civic change monitor.
 
 Area: ${params.area}
 
@@ -123,7 +123,7 @@ Return:
       provider: "Google Gemini",
       mode: "api-error-fallback",
       purpose:
-        "Gemini editorial decision failed, so LocalLens fell back to its seeded editorial policy.",
+        "Gemini editorial decision failed, so PublicWire fell back to its seeded editorial policy.",
       decision: {
         publishable: params.change.status !== "rejected",
         classification: params.change.importance,

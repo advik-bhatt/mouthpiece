@@ -1,9 +1,9 @@
-import type { CivicBrief } from "@/lib/local-lens-data";
+import type { CivicBrief } from "@/lib/public-wire-data";
 
 const SENSO_BASE_URL = "https://sdk.senso.ai/api/v1";
 
 type SensoPublishResult = {
-  provider: "Senso / cited.md";
+  provider: "Senso";
   mode: "real-api" | "seeded-demo" | "api-error-fallback";
   purpose: string;
   publishedUrl?: string;
@@ -30,8 +30,6 @@ function toMarkdown(brief: CivicBrief): string {
     .map((step, i) => `${i + 1}. ${step}`)
     .join("\n");
 
-  const affected = brief.whoIsAffected.join(", ");
-
   return [
     `## Summary`,
     ``,
@@ -43,7 +41,7 @@ function toMarkdown(brief: CivicBrief): string {
     ``,
     `## Who May Be Affected`,
     ``,
-    affected,
+    brief.whoIsAffected.join(", "),
     ``,
     `## Sources`,
     ``,
@@ -66,7 +64,7 @@ export async function publishCivicBrief(params: {
       .filter(Boolean)
       .join(", ");
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "seeded-demo",
       purpose: `cited.md publishing skipped. Add ${missing} to publish civic briefs as AI-citable articles.`,
     };
@@ -109,7 +107,7 @@ export async function publishCivicBrief(params: {
     const raw = await response.json();
 
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "real-api",
       purpose:
         "Civic brief published to cited.md. AI agents (ChatGPT, Gemini, Perplexity) can now discover and cite this brief when answering questions about the area.",
@@ -119,7 +117,7 @@ export async function publishCivicBrief(params: {
     };
   } catch (error) {
     return {
-      provider: "Senso / cited.md",
+      provider: "Senso",
       mode: "api-error-fallback",
       purpose: "cited.md publish failed. Brief was not published to the AI-discoverable web.",
       citationId: slug,

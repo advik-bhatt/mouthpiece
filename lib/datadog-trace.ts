@@ -12,10 +12,10 @@ export async function traceStep<T>(
 
     try {
       const result = await fn();
-      span.setTag("local_lens.status", "ok");
+      span.setTag("public_wire.status", "ok");
       return result;
     } catch (error) {
-      span.setTag("local_lens.status", "error");
+      span.setTag("public_wire.status", "error");
       span.setTag("error", error instanceof Error ? error.message : String(error));
       throw error;
     } finally {
