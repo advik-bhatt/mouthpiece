@@ -1,3 +1,12 @@
+# PublicWire — Datadog Hackathon Submission
+
+> [!IMPORTANT]
+> **➡️ This project now lives at [advik-bhatt/public-wire](https://github.com/advik-bhatt/public-wire).**
+>
+> This is the GitHub repository where the hackathon content is stored: **PublicWire**, our submission for the **Datadog × Google DeepMind hackathon** (with Lovable, ClickHouse, Senso, and Nimble). The project was originally developed under this name — `mouthpiece` — before the repository was renamed to [`public-wire`](https://github.com/advik-bhatt/public-wire), where the website and all further development live. This repo preserves the submission as it stood at the end of the hackathon, along with its full commit history.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
